@@ -379,6 +379,7 @@ void *logging_thread(void *arg)
 // ================= CHILD FUNCTION =================
 int child_fn(void *arg)
 {
+    setpriority(PRIO_PROCESS, 0, req->nice_value);
     control_request_t *req = (control_request_t *)arg;
 
     printf(" Container started (PID namespace)\n");
