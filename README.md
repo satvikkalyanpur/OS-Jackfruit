@@ -177,7 +177,7 @@ sudo ./engine stop c1
 ---
 ## Engineering Analysis
 
-Isolation Mechanisms
+1. Isolation Mechanisms
 
 The runtime uses Linux namespaces and chroot() for isolation.
 PID namespaces (CLONE_NEWPID) give each container its own process tree, so processes inside cannot see host processes. UTS namespaces (CLONE_NEWUTS) isolate system identity, allowing each container to have its own hostname. Mount namespaces (CLONE_NEWNS) isolate filesystem changes.
@@ -186,7 +186,7 @@ chroot() restricts the container’s filesystem view to its rootfs, and /proc is
 
 However, all containers still share the same host kernel, including the scheduler, memory management, and system calls.
 
-Supervisor and Process Lifecycle
+2. Supervisor and Process Lifecycle
 
 A long-running supervisor manages all containers. It creates them using clone(), tracks metadata (ID, PID, state), and handles lifecycle events.
 
@@ -194,7 +194,7 @@ Containers are child processes of the supervisor. When they exit, the supervisor
 
 This centralized control simplifies management and cleanup.
 
-IPC, Threads, and Synchronization
+3. IPC, Threads, and Synchronization
 
 The runtime uses a UNIX domain socket for communication between client and supervisor (control plane).
 
@@ -202,7 +202,7 @@ For logging, it uses a bounded buffer with a producer-consumer model. Multiple p
 
 Race conditions are avoided using a mutex for mutual exclusion and condition variables to handle full/empty buffer states. This ensures safe and efficient synchronization without busy waiting.
 
-Memory Management and Enforcement
+4. Memory Management and Enforcement
 
 RSS (Resident Set Size) measures the physical memory a process is using in RAM, but not swapped-out memory.
 
@@ -210,13 +210,12 @@ Soft limits act as thresholds for warning or pressure, while hard limits are str
 
 Enforcement must be in kernel space because only the kernel has full control over memory usage and can reliably enforce limits. User-space alone cannot guarantee this.
 
-Scheduling Behavior
+5. Scheduling Behavior
 
 Linux’s Completely Fair Scheduler distributes CPU time fairly among processes. CPU-bound workloads share CPU evenly, while processes with lower nice values get higher priority.
 
 I/O-bound processes are scheduled quickly to maintain responsiveness.
 
-This reflects key goals: fairness (equal sharing), responsiveness (quick handling of interactive tasks), and throughput (efficient CPU usage).
 ---
 
 ## Conclusion
