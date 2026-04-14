@@ -193,6 +193,18 @@ sudo ./engine stop c1
 ```
 
 ---
+## Screenshots
+
+<img width="1280" height="800" alt="task1" src="https://github.com/user-attachments/assets/72da0cba-bac7-4f90-af33-507f600fa1b2" />
+<img width="1280" height="800" alt="task2" src="https://github.com/user-attachments/assets/de946c90-e336-4b9f-9343-bcffa0a7bae8" />
+<img width="1280" height="800" alt="c1_logs" src="https://github.com/user-attachments/assets/b9955117-34ef-4421-846e-34ba94317e26" />
+<img width="1280" height="800" alt="hostname_namespace_proof" src="https://github.com/user-attachments/assets/200d99fe-339d-4a5d-ac4c-04f869b1af28" />
+<img width="1280" height="800" alt="ps_after_stop" src="https://github.com/user-attachments/assets/fd0a9fa1-4e70-426d-9f7b-68e8d85068b0" />
+<img width="1280" height="800" alt="ps_command" src="https://github.com/user-attachments/assets/d0a6778f-68f1-4b3d-997d-78766eb6b802" />
+<img width="1280" height="800" alt="supervisor_running" src="https://github.com/user-attachments/assets/9f1c0e2f-0d90-4eed-bd3a-469a207697eb" />
+<img width="1280" height="800" alt="task3" src="https://github.com/user-attachments/assets/883f1f87-718e-48b8-b2d8-30ab6b07b91a" />
+
+---
 
 ## Expected Output
 
@@ -217,18 +229,7 @@ sudo ./engine stop c1
 * `rootfs/` – Minimal filesystem used for containers
 
 ---
-## Screenshots
 
-<img width="1280" height="800" alt="task1" src="https://github.com/user-attachments/assets/72da0cba-bac7-4f90-af33-507f600fa1b2" />
-<img width="1280" height="800" alt="task2" src="https://github.com/user-attachments/assets/de946c90-e336-4b9f-9343-bcffa0a7bae8" />
-<img width="1280" height="800" alt="task3" src="https://github.com/user-attachments/assets/883f1f87-718e-48b8-b2d8-30ab6b07b91a" />
-<img width="1280" height="800" alt="c1_logs" src="https://github.com/user-attachments/assets/b9955117-34ef-4421-846e-34ba94317e26" />
-<img width="1280" height="800" alt="hostname_namespace_proof" src="https://github.com/user-attachments/assets/200d99fe-339d-4a5d-ac4c-04f869b1af28" />
-<img width="1280" height="800" alt="ps_after_stop" src="https://github.com/user-attachments/assets/fd0a9fa1-4e70-426d-9f7b-68e8d85068b0" />
-<img width="1280" height="800" alt="ps_command" src="https://github.com/user-attachments/assets/d0a6778f-68f1-4b3d-997d-78766eb6b802" />
-<img width="1280" height="800" alt="supervisor_running" src="https://github.com/user-attachments/assets/9f1c0e2f-0d90-4eed-bd3a-469a207697eb" />
-
----
 ## Conclusion
 
 This project demonstrates the design and implementation of a simplified container runtime using Linux system programming concepts.
