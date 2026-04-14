@@ -20,6 +20,48 @@ The system consists of:
 * Kernel module (`monitor.c`)
 
 ---
+## Engineering Analysis
+
+1. Isolation Mechanisms
+
+The runtime uses Linux namespaces and chroot() for isolation.
+PID namespaces (CLONE_NEWPID) give each container its own process tree, so processes inside cannot see host processes. UTS namespaces (CLONE_NEWUTS) isolate system identity, allowing each container to have its own hostname. Mount namespaces (CLONE_NEWNS) isolate filesystem changes.
+
+chroot() restricts the container’s filesystem view to its rootfs, and /proc is mounted inside for process visibility within the namespace.
+
+However, all containers still share the same host kernel, including the scheduler, memory management, and system calls.
+
+2. Supervisor and Process Lifecycle
+
+A long-running supervisor manages all containers. It creates them using clone(), tracks metadata (ID, PID, state), and handles lifecycle events.
+
+Containers are child processes of the supervisor. When they exit, the supervisor reaps them using waitpid() to avoid zombies. It also handles signals—sending SIGTERM for graceful shutdown and SIGKILL if needed.
+
+This centralized control simplifies management and cleanup.
+
+3. IPC, Threads, and Synchronization
+
+The runtime uses a UNIX domain socket for communication between client and supervisor (control plane).
+
+For logging, it uses a bounded buffer with a producer-consumer model. Multiple producers (container events) and a consumer thread (logger) share this buffer.
+
+Race conditions are avoided using a mutex for mutual exclusion and condition variables to handle full/empty buffer states. This ensures safe and efficient synchronization without busy waiting.
+
+4. Memory Management and Enforcement
+
+RSS (Resident Set Size) measures the physical memory a process is using in RAM, but not swapped-out memory.
+
+Soft limits act as thresholds for warning or pressure, while hard limits are strict caps that trigger enforcement.
+
+Enforcement must be in kernel space because only the kernel has full control over memory usage and can reliably enforce limits. User-space alone cannot guarantee this.
+
+5. Scheduling Behavior
+
+Linux’s Completely Fair Scheduler distributes CPU time fairly among processes. CPU-bound workloads share CPU evenly, while processes with lower nice values get higher priority.
+
+I/O-bound processes are scheduled quickly to maintain responsiveness.
+
+---
 
 ## Architecture
 
@@ -175,49 +217,18 @@ sudo ./engine stop c1
 * `rootfs/` – Minimal filesystem used for containers
 
 ---
-## Engineering Analysis
+## Screenshots
 
-1. Isolation Mechanisms
-
-The runtime uses Linux namespaces and chroot() for isolation.
-PID namespaces (CLONE_NEWPID) give each container its own process tree, so processes inside cannot see host processes. UTS namespaces (CLONE_NEWUTS) isolate system identity, allowing each container to have its own hostname. Mount namespaces (CLONE_NEWNS) isolate filesystem changes.
-
-chroot() restricts the container’s filesystem view to its rootfs, and /proc is mounted inside for process visibility within the namespace.
-
-However, all containers still share the same host kernel, including the scheduler, memory management, and system calls.
-
-2. Supervisor and Process Lifecycle
-
-A long-running supervisor manages all containers. It creates them using clone(), tracks metadata (ID, PID, state), and handles lifecycle events.
-
-Containers are child processes of the supervisor. When they exit, the supervisor reaps them using waitpid() to avoid zombies. It also handles signals—sending SIGTERM for graceful shutdown and SIGKILL if needed.
-
-This centralized control simplifies management and cleanup.
-
-3. IPC, Threads, and Synchronization
-
-The runtime uses a UNIX domain socket for communication between client and supervisor (control plane).
-
-For logging, it uses a bounded buffer with a producer-consumer model. Multiple producers (container events) and a consumer thread (logger) share this buffer.
-
-Race conditions are avoided using a mutex for mutual exclusion and condition variables to handle full/empty buffer states. This ensures safe and efficient synchronization without busy waiting.
-
-4. Memory Management and Enforcement
-
-RSS (Resident Set Size) measures the physical memory a process is using in RAM, but not swapped-out memory.
-
-Soft limits act as thresholds for warning or pressure, while hard limits are strict caps that trigger enforcement.
-
-Enforcement must be in kernel space because only the kernel has full control over memory usage and can reliably enforce limits. User-space alone cannot guarantee this.
-
-5. Scheduling Behavior
-
-Linux’s Completely Fair Scheduler distributes CPU time fairly among processes. CPU-bound workloads share CPU evenly, while processes with lower nice values get higher priority.
-
-I/O-bound processes are scheduled quickly to maintain responsiveness.
+<img width="1280" height="800" alt="task1" src="https://github.com/user-attachments/assets/72da0cba-bac7-4f90-af33-507f600fa1b2" />
+<img width="1280" height="800" alt="task2" src="https://github.com/user-attachments/assets/de946c90-e336-4b9f-9343-bcffa0a7bae8" />
+<img width="1280" height="800" alt="task3" src="https://github.com/user-attachments/assets/883f1f87-718e-48b8-b2d8-30ab6b07b91a" />
+<img width="1280" height="800" alt="c1_logs" src="https://github.com/user-attachments/assets/b9955117-34ef-4421-846e-34ba94317e26" />
+<img width="1280" height="800" alt="hostname_namespace_proof" src="https://github.com/user-attachments/assets/200d99fe-339d-4a5d-ac4c-04f869b1af28" />
+<img width="1280" height="800" alt="ps_after_stop" src="https://github.com/user-attachments/assets/fd0a9fa1-4e70-426d-9f7b-68e8d85068b0" />
+<img width="1280" height="800" alt="ps_command" src="https://github.com/user-attachments/assets/d0a6778f-68f1-4b3d-997d-78766eb6b802" />
+<img width="1280" height="800" alt="supervisor_running" src="https://github.com/user-attachments/assets/9f1c0e2f-0d90-4eed-bd3a-469a207697eb" />
 
 ---
-
 ## Conclusion
 
 This project demonstrates the design and implementation of a simplified container runtime using Linux system programming concepts.
