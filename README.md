@@ -62,6 +62,20 @@ Linux’s Completely Fair Scheduler distributes CPU time fairly among processes.
 I/O-bound processes are scheduled quickly to maintain responsiveness.
 
 ---
+## Screenshots
+
+![1](https://github.com/user-attachments/assets/bfc43dc7-5c22-4e37-8f68-d8871ef1213e)
+![2](https://github.com/user-attachments/assets/31c61280-c9b6-4f29-9331-48a89642bc85)
+![3](https://github.com/user-attachments/assets/89fc1d37-bbe2-4107-80ea-9e316638c416)
+![4](https://github.com/user-attachments/assets/45cba321-d936-4836-864c-5715a7c1ea2a)
+![5](https://github.com/user-attachments/assets/9eabb51c-a09a-48e8-b908-9a4bc818a280)
+![6](https://github.com/user-attachments/assets/7be2a585-c9c5-4523-8992-04c76e884e3f)
+![7](https://github.com/user-attachments/assets/563774d2-6226-450b-bccc-7804a5c60064)
+![8](https://github.com/user-attachments/assets/f6a797b2-4404-4691-bfbc-25a791a0e847)
+![9](https://github.com/user-attachments/assets/64062a3b-8c61-4586-9ca9-27b9a51dff90)
+
+
+---
 
 ## Architecture
 
@@ -191,18 +205,6 @@ sudo ./engine logs c1
 ```bash
 sudo ./engine stop c1
 ```
-
----
-## Screenshots
-
-<img width="1280" height="800" alt="task1" src="https://github.com/user-attachments/assets/72da0cba-bac7-4f90-af33-507f600fa1b2" />
-<img width="1280" height="800" alt="task2" src="https://github.com/user-attachments/assets/de946c90-e336-4b9f-9343-bcffa0a7bae8" />
-<img width="1280" height="800" alt="c1_logs" src="https://github.com/user-attachments/assets/b9955117-34ef-4421-846e-34ba94317e26" />
-<img width="1280" height="800" alt="hostname_namespace_proof" src="https://github.com/user-attachments/assets/200d99fe-339d-4a5d-ac4c-04f869b1af28" />
-<img width="1280" height="800" alt="ps_after_stop" src="https://github.com/user-attachments/assets/fd0a9fa1-4e70-426d-9f7b-68e8d85068b0" />
-<img width="1280" height="800" alt="ps_command" src="https://github.com/user-attachments/assets/d0a6778f-68f1-4b3d-997d-78766eb6b802" />
-<img width="1280" height="800" alt="supervisor_running" src="https://github.com/user-attachments/assets/9f1c0e2f-0d90-4eed-bd3a-469a207697eb" />
-<img width="1280" height="800" alt="task3" src="https://github.com/user-attachments/assets/883f1f87-718e-48b8-b2d8-30ab6b07b91a" />
 
 ---
 
