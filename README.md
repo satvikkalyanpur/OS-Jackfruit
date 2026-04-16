@@ -231,6 +231,19 @@ sudo ./engine stop c1
 * `rootfs/` – Minimal filesystem used for containers
 
 ---
+## Design Decisions and Tradeoffs
+Namespace Isolation: We used Linux namespaces (PID, mount, UTS, etc.) so each container gets its own isolated view of processes and filesystem. This ensures strong separation between host and container environments. The main tradeoff is that debugging becomes more difficult because processes and resources are hidden within separate namespace contexts. We chose this approach because it is lightweight, secure, and the standard mechanism used by Linux containers, avoiding the need for heavier virtualization.
+
+Supervisor Architecture: We implemented a long-running supervisor process that is responsible for creating, tracking, and cleaning up child container processes. This centralizes lifecycle management and ensures controlled execution. The tradeoff is that the supervisor becomes a single point of failure and must be kept reliable. We chose this design because it simplifies orchestration and gives a single control layer for all container operations.
+
+IPC/Logging: We used a simple inter-process communication and centralized logging mechanism between the supervisor and containers. This makes it easy to trace execution flow and debug issues since all logs are collected in one place. The tradeoff is reduced performance and flexibility compared to lower-level IPC mechanisms like shared memory or advanced message queues. We chose this design because clarity and debuggability were more important than raw performance for this project.
+
+Kernel Monitor: We built a lightweight monitoring system that observes process and resource usage externally rather than modifying the kernel. This provides visibility into system behavior without deep kernel integration. The tradeoff is that the monitoring is approximate and may not capture fine-grained or real-time kernel-level metrics. We chose this approach because it avoids kernel complexity while still providing useful runtime insights.
+
+Scheduling Experiments: We experimented with Linux scheduling policies by adjusting process priorities and observing behavior under different workloads. This allowed us to study scheduling without modifying the kernel itself. The tradeoff is that results can vary depending on host system load and are not fully deterministic. We chose this approach because it is safe, portable, and sufficient for demonstrating scheduling concepts without kernel-level modifications.
+
+
+---
 
 ## Conclusion
 
