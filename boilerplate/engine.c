@@ -6,7 +6,7 @@
  *   - key runtime data structures are defined
  *   - bounded-buffer skeleton is defined
  *   - supervisor / client split is outlined
- *
+ * 
  * Students are expected to design:
  *   - the control-plane IPC implementation
  *   - container lifecycle and metadata synchronization
