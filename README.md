@@ -5,6 +5,7 @@
 
 * PES1UG24CS617 – Satvik Kalyanpur
 * PES1UG24CS619 – Shahid Tahsildar
+* Section: K
 
 ---
 
@@ -20,60 +21,15 @@ The system consists of:
 * Kernel module (`monitor.c`)
 
 ---
-## Engineering Analysis
 
-1. Isolation Mechanisms
+## Project Structure
 
-The runtime uses Linux namespaces and chroot() for isolation.
-PID namespaces (CLONE_NEWPID) give each container its own process tree, so processes inside cannot see host processes. UTS namespaces (CLONE_NEWUTS) isolate system identity, allowing each container to have its own hostname. Mount namespaces (CLONE_NEWNS) isolate filesystem changes.
-
-chroot() restricts the container’s filesystem view to its rootfs, and /proc is mounted inside for process visibility within the namespace.
-
-However, all containers still share the same host kernel, including the scheduler, memory management, and system calls.
-
-2. Supervisor and Process Lifecycle
-
-A long-running supervisor manages all containers. It creates them using clone(), tracks metadata (ID, PID, state), and handles lifecycle events.
-
-Containers are child processes of the supervisor. When they exit, the supervisor reaps them using waitpid() to avoid zombies. It also handles signals—sending SIGTERM for graceful shutdown and SIGKILL if needed.
-
-This centralized control simplifies management and cleanup.
-
-3. IPC, Threads, and Synchronization
-
-The runtime uses a UNIX domain socket for communication between client and supervisor (control plane).
-
-For logging, it uses a bounded buffer with a producer-consumer model. Multiple producers (container events) and a consumer thread (logger) share this buffer.
-
-Race conditions are avoided using a mutex for mutual exclusion and condition variables to handle full/empty buffer states. This ensures safe and efficient synchronization without busy waiting.
-
-4. Memory Management and Enforcement
-
-RSS (Resident Set Size) measures the physical memory a process is using in RAM, but not swapped-out memory.
-
-Soft limits act as thresholds for warning or pressure, while hard limits are strict caps that trigger enforcement.
-
-Enforcement must be in kernel space because only the kernel has full control over memory usage and can reliably enforce limits. User-space alone cannot guarantee this.
-
-5. Scheduling Behavior
-
-Linux’s Completely Fair Scheduler distributes CPU time fairly among processes. CPU-bound workloads share CPU evenly, while processes with lower nice values get higher priority.
-
-I/O-bound processes are scheduled quickly to maintain responsiveness.
-
----
-## Screenshots
-
-![1](https://github.com/user-attachments/assets/bfc43dc7-5c22-4e37-8f68-d8871ef1213e)
-![2](https://github.com/user-attachments/assets/31c61280-c9b6-4f29-9331-48a89642bc85)
-![3](https://github.com/user-attachments/assets/89fc1d37-bbe2-4107-80ea-9e316638c416)
-![4](https://github.com/user-attachments/assets/45cba321-d936-4836-864c-5715a7c1ea2a)
-![5](https://github.com/user-attachments/assets/9eabb51c-a09a-48e8-b908-9a4bc818a280)
-![6](https://github.com/user-attachments/assets/7be2a585-c9c5-4523-8992-04c76e884e3f)
-![7](https://github.com/user-attachments/assets/563774d2-6226-450b-bccc-7804a5c60064)
-![8](https://github.com/user-attachments/assets/f6a797b2-4404-4691-bfbc-25a791a0e847)
-![9](https://github.com/user-attachments/assets/64062a3b-8c61-4586-9ca9-27b9a51dff90)
-
+* `engine.c` – User-space container runtime
+* `monitor.c` – Kernel module for memory monitoring
+* `monitor_ioctl.h` – IOCTL interface definitions
+* `Makefile` – Build configuration
+* `logs/` – Directory for container logs
+* `rootfs/` – Minimal filesystem used for containers
 
 ---
 
@@ -157,78 +113,132 @@ Key components:
 
 ## How to Run
 
-### Build
+**Environment Setup:** Ubuntu 22.04/24.04 VM. 
+Secure boot must be disabled.
 
+**Step 1: Build the Project and Rootfs**
 ```bash
-make
+# Build the engine, workloads, and kernel module
+make all
+
+# Setup the Alpine mini root filesystem
+mkdir rootfs-base
+wget [https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-minirootfs-3.20.3-x86_64.tar.gz](https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-minirootfs-3.20.3-x86_64.tar.gz)
+# Note: For ARM64 Macs, use the aarch64 tarball instead
+tar -xzf alpine-minirootfs-3.20.3-x86_64.tar.gz -C rootfs-base
+
+# Create isolated, writable rootfs directories for the containers
+cp -a ./rootfs-base ./rootfs-alpha
+cp -a ./rootfs-base ./rootfs-beta
 ```
 
-### Load Kernel Module
-
+**Step 2: Load the Kernel Monitor**
 ```bash
 sudo insmod monitor.ko
+ls -l /dev/container_monitor # Verify device creation
 ```
 
-### Start Supervisor
-
+**Step 3: Run the Supervisor**
+Open a new terminal (Terminal 1) and start the long-running daemon:
 ```bash
-sudo ./engine supervisor rootfs
+sudo ./engine supervisor ./rootfs-base
 ```
 
-### Start Container
-
+**Step 4: Launch and Manage Containers**
+Open another terminal (Terminal 2) to use the CLI client:
 ```bash
-sudo ./engine start c1 rootfs /bin/bash
-```
+# Start containers (using 'exec' so the workload becomes PID 1)
+sudo ./engine start alpha ./rootfs-alpha "exec /bin/sleep 300" --soft-mib 40 --hard-mib 64
+sudo ./engine start beta ./rootfs-beta "exec /bin/sleep 300"
 
-### Inside Container (Example)
+# View running containers and their states
+sudo ./engine ps
 
-```bash
-echo $$
-echo $(</proc/sys/kernel/hostname)
-```
+# View bounded-buffer logs
+sudo ./engine logs alpha
 
-### List Containers
+# Stop containers gracefully via SIGTERM
+sudo ./engine stop alpha
+sudo ./engine stop beta
 
-```bash
+# For soft and hard limits
+In terminal 3:
+sudo dmesg -c > /dev/null
+sudo dmesg  -w
+In terminal 2:
+sudo ./engine start hog2 ./rootfs-alpha "/memory_hog 8 1000" --soft-mib 15 --hard-mib 30
 sudo ./engine ps
 ```
 
-### View Logs
-
+**Step 5: Clean Teardown**
 ```bash
-sudo ./engine logs c1
-```
+# In Terminal 1, stop the supervisor cleanly
+# Press Ctrl+C
 
-### Stop Container
+# Verify no ghost processes remain
+ps aux | grep engine
 
-```bash
-sudo ./engine stop c1
+# Unload the kernel module
+sudo rmmod monitor
+sudo make clean
 ```
 
 ---
+## Screenshots
 
-## Expected Output
-
-* Container starts successfully with a unique PID (host side)
-* Inside the container:
-
-  * PID appears as 1 (PID namespace isolation)
-  * Hostname matches container ID (UTS namespace isolation)
-* Logs are printed via the logging system
-* Log files are created under `logs/`
-* Kernel messages related to monitoring are visible using `dmesg`
+![1](https://github.com/user-attachments/assets/bfc43dc7-5c22-4e37-8f68-d8871ef1213e)
+![2](https://github.com/user-attachments/assets/31c61280-c9b6-4f29-9331-48a89642bc85)
+![3](https://github.com/user-attachments/assets/89fc1d37-bbe2-4107-80ea-9e316638c416)
+![4](https://github.com/user-attachments/assets/45cba321-d936-4836-864c-5715a7c1ea2a)
+![5](https://github.com/user-attachments/assets/9eabb51c-a09a-48e8-b908-9a4bc818a280)
+![6](https://github.com/user-attachments/assets/7be2a585-c9c5-4523-8992-04c76e884e3f)
+![7](https://github.com/user-attachments/assets/563774d2-6226-450b-bccc-7804a5c60064)
+![8](https://github.com/user-attachments/assets/f6a797b2-4404-4691-bfbc-25a791a0e847)
+![9](https://github.com/user-attachments/assets/64062a3b-8c61-4586-9ca9-27b9a51dff90)
 
 ---
 
-## Project Structure
+## Engineering Analysis
 
-* `engine.c` – User-space container runtime
-* `monitor.c` – Kernel module for memory monitoring
-* `monitor_ioctl.h` – IOCTL interface definitions
-* `Makefile` – Build configuration
-* `logs/` – Directory for container logs
-* `rootfs/` – Minimal filesystem used for containers
+1. Isolation Mechanisms
+
+The runtime uses Linux namespaces and chroot() for isolation.
+PID namespaces (CLONE_NEWPID) give each container its own process tree, so processes inside cannot see host processes. UTS namespaces (CLONE_NEWUTS) isolate system identity, allowing each container to have its own hostname. Mount namespaces (CLONE_NEWNS) isolate filesystem changes.
+
+chroot() restricts the container’s filesystem view to its rootfs, and /proc is mounted inside for process visibility within the namespace.
+
+However, all containers still share the same host kernel, including the scheduler, memory management, and system calls.
+
+2. Supervisor and Process Lifecycle
+
+A long-running supervisor manages all containers. It creates them using clone(), tracks metadata (ID, PID, state), and handles lifecycle events.
+
+Containers are child processes of the supervisor. When they exit, the supervisor reaps them using waitpid() to avoid zombies. It also handles signals—sending SIGTERM for graceful shutdown and SIGKILL if needed.
+
+This centralized control simplifies management and cleanup.
+
+3. IPC, Threads, and Synchronization
+
+The runtime uses a UNIX domain socket for communication between client and supervisor (control plane).
+
+For logging, it uses a bounded buffer with a producer-consumer model. Multiple producers (container events) and a consumer thread (logger) share this buffer.
+
+Race conditions are avoided using a mutex for mutual exclusion and condition variables to handle full/empty buffer states. This ensures safe and efficient synchronization without busy waiting.
+
+4. Memory Management and Enforcement
+
+RSS (Resident Set Size) measures the physical memory a process is using in RAM, but not swapped-out memory.
+
+Soft limits act as thresholds for warning or pressure, while hard limits are strict caps that trigger enforcement.
+
+Enforcement must be in kernel space because only the kernel has full control over memory usage and can reliably enforce limits. User-space alone cannot guarantee this.
+
+5. Scheduling Behavior
+
+Linux’s Completely Fair Scheduler distributes CPU time fairly among processes. CPU-bound workloads share CPU evenly, while processes with lower nice values get higher priority.
+
+I/O-bound processes are scheduled quickly to maintain responsiveness.
+
 
 ---
 ## Design Decisions and Tradeoffs
@@ -245,17 +255,15 @@ Scheduling Experiments: We experimented with Linux scheduling policies by adjust
 
 ---
 
-## Conclusion
+## Scheduler Experiment Results
 
-This project demonstrates the design and implementation of a simplified container runtime using Linux system programming concepts.
+To observe Linux CFS behavior, we ran a "cage match" on a single CPU core. We executed two `cpu_hog` workloads simultaneously, each running for 15 seconds. 
 
-It integrates:
+* `fast_hog`: nice `-20` (Maximum priority)
+* `slow_hog`: nice `19` (Minimum priority)
 
-* Process creation with `clone()`
-* Namespace-based isolation
-* Filesystem isolation using `chroot()`
-* Kernel-user communication
-* Memory monitoring via a kernel module
-* IPC and concurrent logging mechanisms
-
-The system provides a basic Docker-like environment implemented from scratch, highlighting core operating system concepts in practice.
+**Raw Accumulator Results:**
+| Container | Priority (`nice`) | Final Accumulator Value | Time Elapsed |
+| :--- | :--- | :--- | :--- |
+| **`fast_hog`** | -20 | `14053102039526523489` | 15s |
+| **`slow_hog`** |  19 | `813103959654799625` | 15s (Lagged) |
