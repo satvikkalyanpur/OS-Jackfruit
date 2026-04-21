@@ -186,15 +186,14 @@ sudo make clean
 ---
 ## Screenshots
 
-![1](https://github.com/user-attachments/assets/bfc43dc7-5c22-4e37-8f68-d8871ef1213e)
-![2](https://github.com/user-attachments/assets/31c61280-c9b6-4f29-9331-48a89642bc85)
-![3](https://github.com/user-attachments/assets/89fc1d37-bbe2-4107-80ea-9e316638c416)
-![4](https://github.com/user-attachments/assets/45cba321-d936-4836-864c-5715a7c1ea2a)
-![5](https://github.com/user-attachments/assets/9eabb51c-a09a-48e8-b908-9a4bc818a280)
-![6](https://github.com/user-attachments/assets/7be2a585-c9c5-4523-8992-04c76e884e3f)
-![7](https://github.com/user-attachments/assets/563774d2-6226-450b-bccc-7804a5c60064)
-![8](https://github.com/user-attachments/assets/f6a797b2-4404-4691-bfbc-25a791a0e847)
-![9](https://github.com/user-attachments/assets/64062a3b-8c61-4586-9ca9-27b9a51dff90)
+<img width="1280" height="800" alt="1" src="https://github.com/user-attachments/assets/fc5de3e1-6abb-43f4-925e-b7498c14a30f" />
+<img width="1280" height="800" alt="2" src="https://github.com/user-attachments/assets/c2a47d41-16f0-4277-9805-364ff04017cc" />
+<img width="1280" height="800" alt="3" src="https://github.com/user-attachments/assets/b4c7ffee-d344-4930-861f-89736d09520e" />
+<img width="1280" height="800" alt="4" src="https://github.com/user-attachments/assets/f8370d88-67d6-4f0e-89d4-0985510bc48f" />
+<img width="1280" height="800" alt="5" src="https://github.com/user-attachments/assets/e3647ca1-714c-4eab-82d7-d12220853f43" />
+<img width="1280" height="800" alt="6" src="https://github.com/user-attachments/assets/43e1e5ea-5933-439c-aa59-5b4b075e3192" />
+<img width="1280" height="800" alt="7" src="https://github.com/user-attachments/assets/3aa6da5d-2e6b-4ad1-86a4-b55ac5fe0c7a" />
+
 
 ---
 
